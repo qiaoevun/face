@@ -21,11 +21,11 @@
 		text-align: center;
 		position: relative;
 	}
-	.img-area:after{
+	/*.img-area:after{
 		content: '';
 		position: absolute;
 		left: 0;right: 0;bottom: 0;top: 0;		
-	}
+	}*/
 	img{
 		margin: 0 auto;vertical-align: middle;width:100%;height:auto;
 	}
@@ -58,6 +58,7 @@
 		position: absolute;
 		top: 50vw;
 		left: 50%;
+		width:80%;
 		margin-top: 60px;
 		color: #F35626;
 		text-align: center;
@@ -187,12 +188,18 @@
 			_index 			= 0;
 	
 	window.onload = function(){ 
-		FastClick.attach(document.body);
+		//FastClick.attach(document.body);
 		resetImg();clearRectangle();
 		// 抓取上传图片，转换代码结果，显示图片的dom
-		var $imgArea = $('.img-area');
+		var $imgArea = $('.img-area'),$imgShow = $('.img-show');
 		$imgArea.on('click',function(e){
 			_index = $imgArea.index(this);
+			e.stopPropagation();
+			e.preventDefault();
+			$('#img_upload').click();
+		})
+		$imgShow.on('click',function(e){
+			_index = $imgShow.index(this);
 			e.stopPropagation();
 			e.preventDefault();
 			$('#img_upload').click();
