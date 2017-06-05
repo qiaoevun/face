@@ -181,11 +181,13 @@
 
 <script src="https://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js"></script>
 <script src="https://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script src="js/exif.js" type="text/javascript" charset="utf-8"></script>
 <script type="text/javascript">
 (function(){
 	var api_key 		= 'wz2Vdwz8PmOfnYla2ym7ctIZ1TjCmHjo',
 			api_secret 	= 'b0sEMWYb78rxsZgHyhnuOyITsZfcTjKH',
-			_index 			= 0;
+			_index 			= 0,
+			Orientation	= null;
 	
 	window.onload = function(){ 
 		//FastClick.attach(document.body);
@@ -224,19 +226,25 @@
 			alert("请确保文件为图像类型"); 
 			return false; 
 		}
+	 	//获取照片方向角属性，用户旋转控制  
+    EXIF.getData(file, function() {  
+        EXIF.getAllTags(this);    
+        Orientation = EXIF.getTag(this, 'Orientation');  
+    }); 
 		var m_this = this,size = file.size/(1024);
 		//压缩上传
     loading();
     if(size > 10) {
     	cutImageBase64(m_this,$('.img-show')[_index],300,0.8,faceDetect);
     }else {
-    	var reader=new FileReader();
+    	cutImageBase64(m_this,$('.img-show')[_index],300,1,faceDetect);
+    	/*var reader=new FileReader();
 			reader.readAsDataURL(file);
 			reader.onload=function(){
 				loaded();
 				$('.img-show').eq(_index).attr('src',this.result);
 				faceDetect();
-			}
+			}*/
     }
     
 	}
@@ -380,7 +388,24 @@
 	            height: h
 	        });
 	        ctx.drawImage(that, 0, 0, w, h);
-	
+					if (navigator.userAgent.match(/iphone/i)) {  
+	          //alert(expectWidth + ',' + expectHeight);  
+	          //如果方向角不为1，都需要进行旋转 added by lzk  
+	          if(Orientation != "" && Orientation != 1){  
+	              switch(Orientation){  
+	                  case 6:
+	                      rotateImg(this,'left',canvas);  
+	                      break;  
+	                  case 8:
+	                      rotateImg(this,'right',canvas);  
+	                      break;  
+	                  case 3:
+	                      rotateImg(this,'right',canvas);//转两次  
+	                      rotateImg(this,'right',canvas);  
+	                      break;  
+	              }         
+	          } 
+	       	}
 	        // 生成base64            
 	        base64 = canvas.toDataURL('image/jpeg', quality || 0.8);
 	
@@ -388,7 +413,67 @@
 	        if(cbk) cbk();
 	    };
 	}
-	
+	//对图片旋转处理 added by lzk  
+	function rotateImg(img, direction,canvas) {    
+        //alert(img);  
+        //最小与最大旋转方向，图片旋转4次后回到原方向    
+        var min_step = 0;    
+        var max_step = 3;    
+        //var img = document.getElementById(pid);    
+        if (img == null)return;    
+        //img的高度和宽度不能在img元素隐藏后获取，否则会出错    
+        var height = img.height;    
+        var width = img.width;    
+        //var step = img.getAttribute('step');    
+        var step = 2;    
+        if (step == null) {    
+            step = min_step;    
+        }    
+        if (direction == 'right') {    
+            step++;    
+            //旋转到原位置，即超过最大值    
+            step > max_step && (step = min_step);    
+        } else {    
+            step--;    
+            step < min_step && (step = max_step);    
+        }    
+        //img.setAttribute('step', step);    
+        /*var canvas = document.getElementById('pic_' + pid);   
+        if (canvas == null) {   
+            img.style.display = 'none';   
+            canvas = document.createElement('canvas');   
+            canvas.setAttribute('id', 'pic_' + pid);   
+            img.parentNode.appendChild(canvas);   
+        }  */  
+        //旋转角度以弧度值为参数    
+        var degree = step * 90 * Math.PI / 180;    
+        var ctx = canvas.getContext('2d');    
+        switch (step) {    
+            case 0:    
+                canvas.width = width;    
+                canvas.height = height;    
+                ctx.drawImage(img, 0, 0);    
+                break;    
+            case 1:    
+                canvas.width = height;    
+                canvas.height = width;    
+                ctx.rotate(degree);    
+                ctx.drawImage(img, 0, -height);    
+                break;    
+            case 2:    
+                canvas.width = width;    
+                canvas.height = height;    
+                ctx.rotate(degree);    
+                ctx.drawImage(img, -width, -height);    
+                break;    
+            case 3:    
+                canvas.width = height;    
+                canvas.height = width;    
+                ctx.rotate(degree);    
+                ctx.drawImage(img, -width, 0);    
+                break;    
+        }    
+    } 
 }())
 	
 </script>
